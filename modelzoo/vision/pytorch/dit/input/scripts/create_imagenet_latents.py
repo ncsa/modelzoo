@@ -14,6 +14,7 @@
 
 # isort: off
 import sys
+import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../../../../"))
 # isort: on
@@ -22,7 +23,6 @@ import argparse
 import glob
 import json
 import logging
-import os
 import re
 import shutil
 from datetime import datetime
