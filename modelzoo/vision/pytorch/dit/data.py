@@ -15,7 +15,10 @@
 import sys
 
 from modelzoo.vision.pytorch.dit.input.DiffusionLatentImageNet1KProcessor import (  # noqa
-    DiffusionLatentImageNet1KProcessor,
+    DiffusionLatentImageNet1KProcessor
+)
+from modelzoo.vision.pytorch.dit.input.HollIDiffusionLatentImageNet1KProcessor import (  # noqa
+    HollIDiffusionLatentImageNet1KProcessor
 )
 
 
