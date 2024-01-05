@@ -6,6 +6,15 @@ from modelzoo.vision.pytorch.dit.input.DiffusionLatentImageNet1KProcessor import
 )
 
 
+def run_command(command):
+    # Run the command and check that it succeeded.
+    import subprocess
+    result = subprocess.run(command, shell=True, check=True)
+    # Check that the return code is a success code
+    if result.returncode != 0:
+        raise RuntimeError(f"Command {command} failed with return code {result.returncode}")
+
+
 class HollIDiffusionLatentImageNet1KProcessor(DiffusionLatentImageNet1KProcessor):
     def __init__(self, params):
 
@@ -42,19 +51,26 @@ class HollIDiffusionLatentImageNet1KProcessor(DiffusionLatentImageNet1KProcessor
             data_package_dirs.append(max_root_dir)
 
         # Unpack the tarballs into the unpack directory
-        for package in data_package:
-            with tarfile.open(package, "r") as tar:
-                for member in tar.getmembers():
-                    dest_file = os.path.join(self.unpack_dir, member.name)
-                    if member.isdir():
-                        if not os.path.exists(dest_file):
-                            os.makedirs(dest_file)
-                    else:
-                        if not os.path.exists(os.path.dirname(dest_file)):
-                            tar.extract(member, self.unpack_dir)
+        for package, r_dir in zip(data_package, data_package_dirs):
+            run_command("tar -xf " + package + " -C " + self.unpack_dir)
 
         # Set the data_dir to the unpacked directories
         data_dir = [os.path.join(self.unpack_dir, d) for d in data_package_dirs]
+
+        for dir in data_dir:
+            first_few_files = []
+            file_limit = 100
+            num_files = 0
+            # List all files recursively
+            for root, dirs, files in os.walk(dir):
+                for file in files:
+                    full_filepath = os.path.join(root, file)
+                    first_few_files.append(full_filepath)
+                    num_files += 1
+                    if num_files >= file_limit:
+                        break
+                if num_files >= file_limit:
+                    break
 
         # Update the parameters and remove the unpack_dir and data_package
         params.update({"data_dir": data_dir})
