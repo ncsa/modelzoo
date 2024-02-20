@@ -609,7 +609,6 @@ def run_cstorch_train(params, model_fn, input_fn, cs_config, artifact_dir):
 
     accum_loss = 0
 
-    @cstorch.trace
     @numeric_debug
     def training_step(batch, step):
         nonlocal accum_loss
@@ -680,8 +679,10 @@ def run_cstorch_train(params, model_fn, input_fn, cs_config, artifact_dir):
         if grad_scaler and log_summaries:
             loss_scale = grad_scaler.get_scale()
 
-        # return final values
         return loss, loss_scale
+
+    if not backend.is_gpu:
+        training_step = cstorch.trace(training_step)
 
     def is_log_step():
         return executor.on_final_iteration or (
