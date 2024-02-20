@@ -313,13 +313,24 @@ def setup_artifact_dir(model_dir: str, mode: str):
     """
     time_stamp = time.strftime("%Y%m%d_%H%M%S")
     artifact_dir = Path(model_dir) / "cerebras_logs" / mode / time_stamp
-    artifact_dir.mkdir(parents=True)
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+
+    lock_file = str(artifact_dir.parent.parent / "latest.lock")
+
+    # Wait a random time before attempting to acquire a lock
+    time.sleep(random.uniform(0, 0.5))
 
     # Create a symlink to the artifact_dir so that it's easy to find the latest run.
     # The symlink needs to be at the same level as the subdirectories.
     latest = artifact_dir.parent.parent.joinpath("latest")
-    latest.unlink(missing_ok=True)
-    latest.symlink_to(artifact_dir.resolve())
+    if latest.exists() and latest.resolve() != artifact_dir.resolve():
+        latest.unlink()
+        try:
+            latest.symlink_to(artifact_dir.resolve(), target_is_directory=True)
+        except FileExistsError as e:
+            if latest.resolve() != artifact_dir.resolve():
+                raise e
+
     return str(artifact_dir)
 
 
